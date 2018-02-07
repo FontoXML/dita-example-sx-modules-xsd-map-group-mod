@@ -1,8 +1,16 @@
 define([
+	'fontoxml-dita/configureAsMapSheetFrame',
 	'fontoxml-families/configureAsRemoved',
+	'fontoxml-families/configureAsStructure',
+	'fontoxml-families/configureAsTitleFrame',
+	'fontoxml-families/createMarkupLabelWidget',
 	'fontoxml-localization/t'
 ], function (
+	configureAsMapSheetFrame,
 	configureAsRemoved,
+	configureAsStructure,
+	configureAsTitleFrame,
+	createMarkupLabelWidget,
 	t
 	) {
 	'use strict';
@@ -29,17 +37,40 @@ define([
 		//     map are added to the parent map.
 		configureAsRemoved(sxModule, 'self::mapref', t('mapref'));
 
+		// topichead
+		//     The <topichead> element provides a title-only entry in a navigation map, as an alternative to the
+		//     fully-linked title provided by the <topicref> element. Category: Mapgroup elements
+		configureAsMapSheetFrame(sxModule, 'self::topichead', t('topic group'), {
+			showWhen: 'has-focus',
+			titleQuery: 'if (topicmeta/navtitle) then (topicmeta/navtitle//text()[not(ancestor::*[name() = ("sort-at", "draft-comment", "foreign", "unknown", "required-cleanup", "image")])]/string() => string-join()) else string(./@navtitle)',
+			variation: 'compact-vertical',
+			visibleChildSelectorOrNodeSpec: 'self::topicmeta',
+			blockHeaderLeft: [
+				createMarkupLabelWidget()
+			]
+		});
+
+		// topicmeta in topichead
+		configureAsStructure(sxModule, 'self::topicmeta[parent::topichead]', undefined);
+
+		// navtitle in topicmeta in topichead
+		configureAsTitleFrame(sxModule, 'self::navtitle and parent::topicmeta[parent::topichead]', undefined, {
+			fontVariation: 'document-title'
+		});
+
 		// topicgroup
 		//     The <topicgroup> element is for creating groups of <topicref> elements without affecting the
 		//     hierarchy, as opposed to nested < topicref> elements within a <topicref>, which does imply a
 		//     structural hierarchy. It is typically used outside a hierarchy to identify groups for linking
 		//     without affecting the resulting toc/navigation output. Category: Mapgroup elements
-		configureAsRemoved(sxModule, 'self::topicgroup', t('topicgroup'));
-
-		// topichead
-		//     The <topichead> element provides a title-only entry in a navigation map, as an alternative to the
-		//     fully-linked title provided by the <topicref> element. Category: Mapgroup elements
-		configureAsRemoved(sxModule, 'self::topichead', t('topichead'));
+		configureAsMapSheetFrame(sxModule, 'self::topicgroup', t('untitled topic group'), {
+			showWhen: 'has-focus',
+			variation: 'compact-vertical',
+			visibleChildSelectorOrNodeSpec: 'self::topicmeta',
+			blockHeaderLeft: [
+				createMarkupLabelWidget()
+			]
+		});
 
 		// topicset
 		//     The <topicset> element defines a complete unit of content that can be reused in other DITA maps or
